@@ -1,98 +1,16 @@
-
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BrainrotDigi</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;padding:20px;
-  background:#100d20;color:white;
-  font-family:Arial,sans-serif
-}
-header{text-align:center;margin:12px 0 25px}
-h1{color:#c7a5ff;margin-bottom:6px}
-.sub{color:#aaa1c5;font-size:13px}
-.balance{
-  background:#211a38;border-radius:14px;
-  padding:15px;margin-bottom:22px;
-  display:flex;justify-content:space-between
-}
-h2{font-size:19px}
-.item{
-  background:#201a35;border:1px solid #40315f;
-  padding:16px;border-radius:16px;
-  margin-bottom:12px
-}
-.name{font-size:18px;font-weight:bold}
-.price{color:#ffd166;font-weight:bold;font-size:20px}
-button{
-  width:100%;border:0;border-radius:10px;
-  padding:13px;margin-top:13px;
-  background:#a879ff;color:white;
-  font-size:15px;font-weight:bold
-}
-.note{color:#aaa1c5;font-size:12px;line-height:1.5}
-</style>
-</head>
-<body>
-<header>
-  <h1>🧠 BrainrotDigi</h1>
-  <div class="sub">ПОПОЛНЕНИЕ БАЛАНСА</div>
-</header>
-
-<div class="balance">
-  <span>💰 Твой баланс</span>
-  <b id="balance">Загрузка...</b>
-</div>
-
-<h2>Выбери брейнрота</h2>
-<div id="items"></div>
-
-<p class="note">
-  После подачи заявки передай выбранного персонажа
-  администратору в Roblox. Монеты начисляются только
-  после подтверждения обмена.
-</p>
-
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
-
-const brainrots = [
-  {name:"Garama",price:45,emoji:"🦎"},
-  {name:"Cerberus",price:100,emoji:"🐺"},
-  {name:"Capitano Moby",price:70,emoji:"🐋"},
-  {name:"Dragon",price:800,emoji:"🐉"}
-];
-
-document.getElementById("balance").textContent =
-  "Подключим";
-
-const container = document.getElementById("items");
-
-brainrots.forEach(item => {
-  const card = document.createElement("div");
-  card.className = "item";
-  card.innerHTML = `
-    <div class="name">${item.emoji} ${item.name}</div>
-    <p class="sub">Начисление за подтверждённый обмен</p>
-    <div class="price">+${item.price} 🪙</div>
-    <button>Подать заявку</button>
-  `;
-  card.querySelector("button").onclick = () => {
-    tg.showAlert(
-      "Выбран: " + item.name +
-      "\\nНаграда: " + item.price +
-      " монет. Подключение заявок добавим следующим шагом."
-    );
-  };
-  container.appendChild(card);
-});
-</script>
-</body>
-</html>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BrainrotDigi</title><script src="https://telegram.org/js/telegram-web-app.js"></script><style>*{box-sizing:border-box}body{background:#100d20;color:#f5f1ff;font:15px Arial;margin:0;padding:16px;max-width:750px;margin:auto}h1{text-align:center;color:#caa6ff}h2{font-size:18px}.muted{color:#b8a9d3;font-size:13px}.panel{background:#211a38;border:1px solid #43335f;border-radius:15px;padding:15px;margin:12px 0}button{background:#a879ff;border:0;color:white;padding:12px;border-radius:10px;font-weight:bold;cursor:pointer;margin:5px 4px 5px 0}button:disabled{opacity:.4}.tabs{display:flex;flex-wrap:wrap;gap:5px}.tabs button{flex:1;min-width:100px}.hide{display:none}.coin{color:#ffd166;font-weight:bold}#message{white-space:pre-wrap;color:#e2ccff;min-height:18px}.item{padding:10px 0;border-bottom:1px solid #403456}.item:last-child{border:0}input[type=checkbox]{accent-color:#a879ff}a{color:#caa6ff}</style></head><body><h1>🧠 BrainrotDigi</h1><div class="panel">💰 Баланс: <span id="coins" class="coin">...</span> 🪙</div><nav class="tabs"><button onclick="tab('cases')">🎁 Кейсы</button><button onclick="tab('inventory')">🧠 Коллекция</button><button onclick="tab('trade')">💰 Пополнить</button><button onclick="tab('fuse')">🧬 Fuse</button><button onclick="tab('upgrade')">⚡ Upgrader</button></nav><p id="message"></p><section id="cases"><h2>🎁 Кейсы</h2><div class="panel">Обычный кейс — <span class="coin">100 🪙</span><p class="muted">Шансы: Garama 60%, Cerberus 25%, Capitano Moby 12%, Dragon 3%</p><button onclick="openCase(false)">Открыть за 100 🪙</button></div><div class="panel">🎁 Бесплатный кейс за подписку на <a href="https://t.me/brainrotdigi">@brainrotdigi</a><p class="muted">Один раз на игрока</p><button onclick="openCase(true)">Проверить подписку и открыть</button></div></section><section id="inventory" class="hide"><h2>🧠 Моя коллекция</h2><div id="inventoryList" class="panel"></div></section><section id="trade" class="hide"><h2>💰 Пополнение брейнротами</h2><p class="muted">Подай заявку, передай персонажа в Roblox и дождись подтверждения администратора. Не передавай пароли и коды доступа.</p><div id="tradeList"></div><h2>Мои заявки</h2><div id="requestList" class="panel"></div></section><section id="fuse" class="hide"><h2>🧬 Fuse</h2><p class="muted">Выбери ровно 3 персонажей. Они исчезнут, взамен появится 1 случайный.</p><div id="fuseList" class="panel"></div><button onclick="fuse()">Объединить</button></section><section id="upgrade" class="hide"><h2>⚡ Upgrader</h2><p class="muted">Шанс улучшения до следующего уровня — 40%. При неудаче персонаж исчезает.</p><div id="upgradeList" class="panel"></div><button onclick="upgrade()">Улучшить</button></section><script>
+// Replace this with your deployed HTTPS backend URL, without trailing slash.
+const API_BASE = 'https://YOUR-BACKEND-URL';
+const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();let state={coins:0,inventory:[],requests:[]};
+function notice(s){document.getElementById('message').textContent=s;}
+function tab(id){for(const s of document.querySelectorAll('section'))s.classList.toggle('hide',s.id!==id);}
+async function api(path,body){if(!tg?.initData)throw Error('Открой приложение через Telegram');if(API_BASE.includes('YOUR-BACKEND'))throw Error('Сначала подключи HTTPS-адрес сервера в index.html');const r=await fetch(API_BASE+'/api/'+path,{method:body===undefined?'GET':'POST',headers:{'X-Telegram-Init-Data':tg.initData,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка сервера');return j;}
+async function refresh(){try{state=await api('state');document.getElementById('coins').textContent=state.coins;render();}catch(e){notice(e.message);document.getElementById('coins').textContent='—';}}
+function render(){document.getElementById('inventoryList').innerHTML=state.inventory.map(x=>`<div class="item">🧠 ${x.name} <span class="muted">#${x.id}</span></div>`).join('')||'Пока пусто';document.getElementById('requestList').innerHTML=state.requests.map(x=>`<div class="item">#${x.id} ${x.name}: +${x.reward} 🪙 — ${x.status}</div>`).join('')||'Нет заявок';document.getElementById('fuseList').innerHTML=state.inventory.map(x=>`<label class="item" style="display:block"><input type="checkbox" name="fuseItem" value="${x.id}"> ${x.name} #${x.id}</label>`).join('')||'Нет персонажей';document.getElementById('upgradeList').innerHTML=state.inventory.map(x=>`<label class="item" style="display:block"><input type="radio" name="upgradeItem" value="${x.id}"> ${x.name} #${x.id}</label>`).join('')||'Нет персонажей';}
+const prices=[['Garama',45],['Cerberus',100],['Capitano Moby',70],['Dragon',800]];document.getElementById('tradeList').innerHTML=prices.map(([name,price])=>`<div class="panel"><b>${name}</b><p class="coin">+${price} 🪙</p><button data-name="${name}">Подать заявку</button></div>`).join('');document.querySelectorAll('#tradeList button').forEach(b=>b.onclick=()=>act('trade',{name:b.dataset.name},'Заявка отправлена. Ожидай подтверждения.'));
+async function act(path,body,success){try{notice('Загрузка...');const r=await api(path,body);notice(typeof success==='function'?success(r):success);await refresh();}catch(e){notice(e.message);}}
+function openCase(free){act('case',{free},r=>'🎉 Выпал '+r.won);}
+function fuse(){const ids=[...document.querySelectorAll('input[name=fuseItem]:checked')].map(x=>Number(x.value));if(ids.length!==3)return notice('Выбери ровно 3 персонажей');act('fuse',{ids},r=>'🧬 Получен '+r.won);}
+function upgrade(){const x=document.querySelector('input[name=upgradeItem]:checked');if(!x)return notice('Выбери персонажа');act('upgrade',{id:Number(x.value)},r=>r.success?'⚡ Улучшен до '+r.result:'Неудача. Персонаж исчез.');}
+refresh();
+</script></body></html>
