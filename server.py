@@ -135,6 +135,28 @@ async def upgrade(request):
   await db.executemany('DELETE FROM inventory WHERE id=? AND user_id=?',[(i,uid) for i in ids])
   await db.execute('INSERT INTO inventory(user_id,name) VALUES (?,?)',(uid,result));await db.commit()
  return web.json_response({'success':True,'result':result})
+async def sell(request):
+ uid=await auth(request)
+ body=await request.json()
+ iid=body.get('id')
+ if type(iid)!=int:raise web.HTTPBadRequest(text='Выбери персонажа')
+ async with aiosqlite.connect(DB) as db:
+  await db.execute('BEGIN IMMEDIATE')
+  await ensure_user(db,uid)
+  async with db.execute('SELECT name FROM inventory WHERE id=? AND user_id=?',(iid,uid)) as c:
+   row=await c.fetchone()
+  if not row:
+   await db.rollback();raise web.HTTPConflict(text='Персонаж уже продан или отсутствует')
+  name=row[0]
+  entry=BY_NAME.get(name)
+  if not entry:
+   await db.rollback();raise web.HTTPBadRequest(text='Нет цены для этого персонажа')
+  reward=int(entry['value'])
+  await db.execute('DELETE FROM inventory WHERE id=? AND user_id=?',(iid,uid))
+  await db.execute('UPDATE users SET coins=coins+? WHERE id=?',(reward,uid))
+  await db.commit()
+ return web.json_response({'ok':True,'name':name,'earned':reward})
+
 async def trade(request):
  uid=await auth(request);body=await request.json();name=body.get('name')
  if name not in TRADE_PRICES:raise web.HTTPBadRequest(text='Неизвестный персонаж')
@@ -229,7 +251,7 @@ async def start(message:Message):
 async def main():
  await setup_db();app=web.Application(middlewares=[middleware])
  app.router.add_get('/',lambda request:web.Response(text='BrainrotDigi API running'))
- for path,fn,method in [('state',state,'get'),('case',case,'post'),('fuse',fuse,'post'),('upgrade',upgrade,'post'),('trade',trade,'post'),('withdraw',withdraw,'post')]:getattr(app.router,'add_'+method)('/api/'+path,fn)
+ for path,fn,method in [('state',state,'get'),('case',case,'post'),('fuse',fuse,'post'),('upgrade',upgrade,'post'),('trade',trade,'post'),('withdraw',withdraw,'post'),('sell',sell,'post')]:getattr(app.router,'add_'+method)('/api/'+path,fn)
  runner=web.AppRunner(app);await runner.setup();await web.TCPSite(runner,'0.0.0.0',PORT).start()
  print('BrainrotDigi API running',flush=True);await dp.start_polling(bot)
 if __name__=='__main__':asyncio.run(main())
