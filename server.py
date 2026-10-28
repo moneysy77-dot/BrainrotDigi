@@ -53,7 +53,9 @@ async def auth(request):
     return uid
 
 def cors_headers():
-    return {'Access-Control-Allow-Origin': WEBAPP_URL.rstrip('/'), 'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'}
+   
+    return {'Access-Control-Allow-Origin': 'https://moneysy77-dot.github.io', 'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'}
+
 
 @web.middleware
 async def middleware(request, handler):
