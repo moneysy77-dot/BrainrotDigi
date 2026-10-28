@@ -104,10 +104,10 @@ async def case(request):
   # Предсказуемый цикл без ставок и платных случайных наград.
   count=prev[1] if prev else 0
   item=pool[(uid+count)%len(pool)]
-  await db.execute('INSERT INTO inventory(user_id,name) VALUES (?,?)',(uid,item['name']))
+  inserted=await db.execute('INSERT INTO inventory(user_id,name) VALUES (?,?)',(uid,item['name']))
   await db.execute('INSERT INTO case_claims(user_id,case_id,claimed_at,claim_count) VALUES (?,?,?,?) ON CONFLICT(user_id,case_id) DO UPDATE SET claimed_at=excluded.claimed_at,claim_count=excluded.claim_count',(uid,cid,now,count+1))
   await db.commit()
- return web.json_response({'won':item['name']})
+ return web.json_response({'won':item['name'],'inventory_id':inserted.lastrowid})
 async def fuse(request):
  uid=await auth(request);body=await request.json();ids=body.get('ids',[])
  if not isinstance(ids,list) or len(ids)!=4 or any(type(i)!=int for i in ids) or len(set(ids))!=4:raise web.HTTPBadRequest(text='Выбери 4 разных персонажа')
@@ -123,18 +123,35 @@ async def fuse(request):
   await db.execute('INSERT INTO inventory(user_id,name) VALUES (?,?)',(uid,result));await db.commit()
  return web.json_response({'won':result})
 async def upgrade(request):
- uid=await auth(request);body=await request.json();ids=body.get('ids',[])
- if not isinstance(ids,list) or len(ids)!=2 or any(type(i)!=int for i in ids) or ids[0]==ids[1]:raise web.HTTPBadRequest(text='Выбери 2 одинаковых персонажа')
+ """Гарантированный обмен одного персонажа + доплата игровыми монетами."""
+ uid = await auth(request)
+ body = await request.json()
+ iid, target = body.get('id'), body.get('target')
+ if type(iid) is not int or not isinstance(target, str) or target not in BY_NAME:
+  raise web.HTTPBadRequest(text='Выбери своего персонажа и цель улучшения')
  async with aiosqlite.connect(DB) as db:
   await db.execute('BEGIN IMMEDIATE')
-  async with db.execute('SELECT id,name FROM inventory WHERE user_id=? AND id IN (?,?)',(uid,*ids)) as c: found=await c.fetchall()
-  if len(found)!=2 or found[0][1]!=found[1][1]:await db.rollback();raise web.HTTPBadRequest(text='Нужны 2 одинаковых персонажа')
-  old=BY_NAME.get(found[0][1]);candidates=[x for x in CATALOG if x['value']>old['value']] if old else []
-  if not candidates:await db.rollback();raise web.HTTPConflict(text='Максимальный уровень')
-  result=min(candidates,key=lambda x:x['value'])['name']
-  await db.executemany('DELETE FROM inventory WHERE id=? AND user_id=?',[(i,uid) for i in ids])
-  await db.execute('INSERT INTO inventory(user_id,name) VALUES (?,?)',(uid,result));await db.commit()
- return web.json_response({'success':True,'result':result})
+  await ensure_user(db, uid)
+  async with db.execute('SELECT name FROM inventory WHERE id=? AND user_id=?', (iid, uid)) as c:
+   row = await c.fetchone()
+  if not row or row[0] not in BY_NAME:
+   await db.rollback()
+   raise web.HTTPBadRequest(text='Персонаж не найден в твоей коллекции')
+  current = BY_NAME[row[0]]
+  desired = BY_NAME[target]
+  if desired['value'] <= current['value']:
+   await db.rollback()
+   raise web.HTTPBadRequest(text='Выбери более дорогого персонажа')
+  cost = desired['value'] - current['value']
+  async with db.execute('SELECT coins FROM users WHERE id=?', (uid,)) as c:
+   coins = (await c.fetchone())[0]
+  if coins < cost:
+   await db.rollback()
+   raise web.HTTPConflict(text=f'Недостаточно монет. Нужно {cost} 🪙')
+  await db.execute('UPDATE users SET coins=coins-? WHERE id=?', (cost, uid))
+  await db.execute('UPDATE inventory SET name=? WHERE id=? AND user_id=?', (target, iid, uid))
+  await db.commit()
+ return web.json_response({'success': True, 'result': target, 'cost': cost, 'inventory_id': iid})
 async def sell(request):
  uid=await auth(request)
  body=await request.json()
@@ -255,3 +272,4 @@ async def main():
  runner=web.AppRunner(app);await runner.setup();await web.TCPSite(runner,'0.0.0.0',PORT).start()
  print('BrainrotDigi API running',flush=True);await dp.start_polling(bot)
 if __name__=='__main__':asyncio.run(main())
+
