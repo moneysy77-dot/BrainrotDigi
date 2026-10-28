@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrainrotDigi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:20px;
+  background:#100d20;color:white;
+  font-family:Arial,sans-serif
+}
+header{text-align:center;margin:12px 0 25px}
+h1{color:#c7a5ff;margin-bottom:6px}
+.sub{color:#aaa1c5;font-size:13px}
+.balance{
+  background:#211a38;border-radius:14px;
+  padding:15px;margin-bottom:22px;
+  display:flex;justify-content:space-between
+}
+h2{font-size:19px}
+.item{
+  background:#201a35;border:1px solid #40315f;
+  padding:16px;border-radius:16px;
+  margin-bottom:12px
+}
+.name{font-size:18px;font-weight:bold}
+.price{color:#ffd166;font-weight:bold;font-size:20px}
+button{
+  width:100%;border:0;border-radius:10px;
+  padding:13px;margin-top:13px;
+  background:#a879ff;color:white;
+  font-size:15px;font-weight:bold
+}
+.note{color:#aaa1c5;font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧠 BrainrotDigi</h1>
+  <div class="sub">ПОПОЛНЕНИЕ БАЛАНСА</div>
+</header>
+
+<div class="balance">
+  <span>💰 Твой баланс</span>
+  <b id="balance">Загрузка...</b>
+</div>
+
+<h2>Выбери брейнрота</h2>
+<div id="items"></div>
+
+<p class="note">
+  После подачи заявки передай выбранного персонажа
+  администратору в Roblox. Монеты начисляются только
+  после подтверждения обмена.
+</p>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+const brainrots = [
+  {name:"Garama",price:45,emoji:"🦎"},
+  {name:"Cerberus",price:100,emoji:"🐺"},
+  {name:"Capitano Moby",price:70,emoji:"🐋"},
+  {name:"Dragon",price:800,emoji:"🐉"}
+];
+
+document.getElementById("balance").textContent =
+  "Подключим";
+
+const container = document.getElementById("items");
+
+brainrots.forEach(item => {
+  const card = document.createElement("div");
+  card.className = "item";
+  card.innerHTML = `
+    <div class="name">${item.emoji} ${item.name}</div>
+    <p class="sub">Начисление за подтверждённый обмен</p>
+    <div class="price">+${item.price} 🪙</div>
+    <button>Подать заявку</button>
+  `;
+  card.querySelector("button").onclick = () => {
+    tg.showAlert(
+      "Выбран: " + item.name +
+      "\\nНаграда: " + item.price +
+      " монет. Подключение заявок добавим следующим шагом."
+    );
+  };
+  container.appendChild(card);
+});
+</script>
+</body>
+</html>
